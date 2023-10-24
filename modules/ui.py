@@ -4,6 +4,7 @@ import customtkinter as ctk
 from typing import Callable, Tuple
 import cv2
 from PIL import Image, ImageOps
+import numpy
 
 import modules.globals
 import modules.metadata
@@ -11,6 +12,8 @@ from modules.face_analyser import get_one_face
 from modules.capturer import get_video_frame, get_video_frame_total
 from modules.processors.frame.core import get_frame_processors_modules
 from modules.utilities import is_image, is_video, resolve_relative_path
+import pyvirtualcam 
+from pyvirtualcam import PixelFormat 
 
 ROOT = None
 ROOT_HEIGHT = 700
@@ -34,10 +37,12 @@ img_ft, vid_ft = modules.globals.file_types
 
 
 def init(start: Callable[[], None], destroy: Callable[[], None]) -> ctk.CTk:
-    global ROOT, PREVIEW
+    global ROOT, PREVIEW, camera
 
     ROOT = create_root(start, destroy)
     PREVIEW = create_preview(ROOT)
+    camera = pyvirtualcam.Camera(640, 360, 20, fmt=PixelFormat.BGR, print_fps=True, device='/dev/video23')
+
 
     return ROOT
 
@@ -254,7 +259,7 @@ def webcam_preview():
         # No image selected
         return
     
-    global preview_label, PREVIEW
+    global preview_label, PREVIEW, camera
 
     cap = cv2.VideoCapture(0)  # Use index for the webcam (adjust the index accordingly if necessary)    
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)  # Set the width of the resolution
@@ -288,8 +293,10 @@ def webcam_preview():
         image = cv2.cvtColor(temp_frame, cv2.COLOR_BGR2RGB)  # Convert the image to RGB format to display it with Tkinter
         image = Image.fromarray(image)
         image = ImageOps.contain(image, (PREVIEW_MAX_WIDTH, PREVIEW_MAX_HEIGHT), Image.LANCZOS)
-        image = ctk.CTkImage(image, size=image.size)
-        preview_label.configure(image=image)
+        imagectk = ctk.CTkImage(image, size=image.size)
+        preview_label.configure(image=imagectk)
+        frame = cv2.cvtColor(numpy.array(image), cv2.COLOR_BGR2RGB)
+        camera.send(frame)
         ROOT.update()
 
     cap.release()

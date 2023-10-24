@@ -122,6 +122,20 @@ pip install onnxruntime-openvino==1.15.0
 python run.py --execution-provider openvino
 ```
 
+
+## Install virtual camera device
+First install v4l2loopback. On Ubuntu this would look like
+```sh
+sudo apt install v4l2loopback-dkms
+sudo modprobe v4l2loopback devices=1
+```
+Please create a video device that can be used. 
+```sh
+sudo modprobe -r v4l2loopback && sudo modprobe v4l2loopback devices=1 video_nr=23 card_label="deep-live-cam" exclusive_caps=1 max_buffers=2
+```
+Please not that the parameter **exclusive_caps=1** is needed to support the camera in google chrome.
+
+
 ## How do I use it?
 > Note: When you run this program for the first time, it will download some models ~300MB in size.
 
